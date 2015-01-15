@@ -34,10 +34,14 @@ class AppController extends \yii\console\Controller
     public function actionCreateWebApp($appName)
     {
         $this->checkAppName($appName);
-        $this->generateWebApp($appName);
-        $this->addAppNameToCommon($appName);
 
-        $this->generateWebAppEnvironments($appName);
+        $ret = $this->confirm('Create WebApp '. $appName .'? Are you sure?');
+        if ($ret) {
+            $this->generateWebApp($appName);
+            $this->addAppNameToCommon($appName);
+
+            $this->generateWebAppEnvironments($appName);
+        }
     }
 
     /**
@@ -48,10 +52,14 @@ class AppController extends \yii\console\Controller
     public function actionCreateConsoleApp($appName, $enterName = null)
     {
         $this->checkAppName($appName);
-        $this->generateConsoleApp($appName);
-        $this->addAppNameToCommon($appName);
 
-        $this->generateConsoleAppEnvironments($appName, $enterName);
+        $ret = $this->confirm('Create WebApp '. $appName .'? Are you sure?');
+        if ($ret) {
+            $this->generateConsoleApp($appName);
+            $this->addAppNameToCommon($appName);
+
+            $this->generateConsoleAppEnvironments($appName, $enterName);
+        }
     }
 
     /**
@@ -134,16 +142,16 @@ class AppController extends \yii\console\Controller
         $environmentsConfigFile = ROOT_DIR .'/environments/index.php';
         $environmentsConfig = require($environmentsConfigFile);
 
-        if (in_array($enterName, $environmentsConfig['Development']['setExecutable'])) {
-            $keys = array_keys($environmentsConfig['Development']['setExecutable'], $enterName);
+        if (in_array('scripts/'. $enterName, $environmentsConfig['Development']['setExecutable'])) {
+            $keys = array_keys($environmentsConfig['Development']['setExecutable'], 'scripts/' .$enterName);
 
             foreach($keys as $key) {
                 unset($environmentsConfig['Development']['setExecutable'][$key]);
             }
         }
 
-        if (in_array($enterName, $environmentsConfig['Production']['setExecutable'])) {
-            $keys = array_keys($environmentsConfig['Production']['setExecutable'], $enterName);
+        if (in_array('scripts/'. $enterName, $environmentsConfig['Production']['setExecutable'])) {
+            $keys = array_keys($environmentsConfig['Production']['setExecutable'], 'scripts/' .$enterName);
 
             foreach($keys as $key) {
                 unset($environmentsConfig['Production']['setExecutable'][$key]);
@@ -269,7 +277,7 @@ class AppController extends \yii\console\Controller
                     $replace = $appName;
                 }
                 $source = $templatePath .'/'. $file;
-                $dist = $distPath .'/'. $distFile;
+                $dist = $distPath .'/scripts/'. $distFile;
                 $this->copyFile($source, $dist, $replace);
             }
         }
@@ -277,12 +285,12 @@ class AppController extends \yii\console\Controller
         $environmentsConfigFile = ROOT_DIR .'/environments/index.php';
         $environmentsConfig = require($environmentsConfigFile);
 
-        if (!in_array($distFile, $environmentsConfig['Development']['setExecutable'])) {
-            $environmentsConfig['Development']['setExecutable'][] = $distFile;
+        if (!in_array('scripts/'. $distFile, $environmentsConfig['Development']['setExecutable'])) {
+            $environmentsConfig['Development']['setExecutable'][] = 'scripts/' .$distFile;
         }
 
-        if (!in_array($distFile, $environmentsConfig['Production']['setExecutable'])) {
-            $environmentsConfig['Production']['setExecutable'][] = $distFile;
+        if (!in_array('scripts/'. $distFile, $environmentsConfig['Production']['setExecutable'])) {
+            $environmentsConfig['Production']['setExecutable'][] = 'scripts/' .$distFile;
         }
 
         file_put_contents($environmentsConfigFile, "<?php\nreturn ". var_export($environmentsConfig, true).';');
