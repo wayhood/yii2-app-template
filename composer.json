@@ -1,6 +1,6 @@
 {
-    "name": "yiisoft/yii2-app-advanced",
-    "description": "Yii 2 Advanced Application Template",
+    "name": "wayhood/yii2-app-template",
+    "description": "Yii 2 Application Template",
     "keywords": ["yii2", "framework", "advanced", "application template"],
     "homepage": "http://www.yiiframework.com/",
     "type": "project",
