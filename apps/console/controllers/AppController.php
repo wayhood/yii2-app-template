@@ -1,22 +1,51 @@
 <?php
+/**
+ * @link http://www.wayhood.com/
+ */
 
 namespace console\controllers;
 
+/**
+ * Create or Delete to web or console application
+ *
+ * #create a web application
+ * scripts/yii app/create-web-app frontend
+ *
+ * #create a console application
+ * scripts/yii app/create-console-app queue
+ *
+ * #delete a web application
+ * scripts/yii app/delete-web-app frontend
+ *
+ * #delete a console application
+ * scripts/yii app/delete-console-app queue
+ *
+ * @package console\controllers
+ * @author Song Yeung <netyum@163.com>
+ * @date 12/2/14
+ */
 class AppController extends \yii\console\Controller
 {
-	/**
-	 * 
-	 */
-	public function actionCreateWebapp($appName)
-	{
+
+    /**
+     * Create a web application
+     * @param $appName app's name
+     */
+    public function actionCreateWebApp($appName)
+    {
         $this->checkAppName($appName);
         $this->generateWebApp($appName);
         $this->addAppNameToCommon($appName);
 
         $this->generateWebAppEnvironments($appName);
- 	}
+    }
 
-    public function actionCreateConsoleapp($appName, $enterName = null)
+    /**
+     * Create a console application
+     * @param $appName app's name
+     * @param null $enterName enter script's name
+     */
+    public function actionCreateConsoleApp($appName, $enterName = null)
     {
         $this->checkAppName($appName);
         $this->generateConsoleApp($appName);
@@ -25,7 +54,12 @@ class AppController extends \yii\console\Controller
         $this->generateConsoleAppEnvironments($appName, $enterName);
     }
 
-    public function actionDeleteWebapp($appName)
+    /**
+     * Delete a web application
+     * @param $appName app's name
+     * @return mixed
+     */
+    public function actionDeleteWebApp($appName)
     {
         if ($appName == 'common' || $appName == 'console') {
             $this->stderr('Error: App name can\'t was common or console'."\n");
@@ -38,7 +72,13 @@ class AppController extends \yii\console\Controller
         }
     }
 
-    public function actionDeleteConsoleapp($appName, $enterName = null)
+    /**
+     * Delete a console application
+     * @param $appName app's name
+     * @param null $enterName enter script's name
+     * @return mixed
+     */
+    public function actionDeleteConsoleApp($appName, $enterName = null)
     {
         if ($appName == 'common' || $appName == 'console') {
             $this->stderr('Error: App name can\'t was common, console or yii'."\n");
@@ -56,12 +96,21 @@ class AppController extends \yii\console\Controller
         }
     }
 
+    /**
+     * Delete app dir at runtimes
+     * @param $appName app's name
+     */
     protected function deleteRuntime($appName)
     {
         $runtimePath = ROOT_DIR .'/runtimes/' . $appName;
         $this->destroyDir($runtimePath);
     }
 
+    /**
+     * Delete console application
+     * @param $appName
+     * @param $enterName
+     */
     protected function deleteConsoleApp($appName, $enterName)
     {
         $this->stdout("Remove ConsoleApp $appName\n");
@@ -75,11 +124,11 @@ class AppController extends \yii\console\Controller
         foreach($envs as $env) {
             $envPath = $environmentPath .'/'.$env.'/apps/'.$appName;
             $this->destroyDir($envPath);
-            $enterFile = $environmentPath .'/'.$env.'/'. $enterName;
+            $enterFile = $environmentPath .'/'.$env.'/scripts/'. $enterName;
             @unlink($enterFile);
         }
 
-        @unlink(ROOT_DIR .'/'. $enterName);
+        @unlink(ROOT_DIR .'/scripts/'. $enterName);
 
         //unset evn config;
         $environmentsConfigFile = ROOT_DIR .'/environments/index.php';
@@ -106,6 +155,9 @@ class AppController extends \yii\console\Controller
         $this->stdout("... ok\n");
     }
 
+    /**
+     * @param $appName
+     */
     protected function deleteWebApp($appName)
     {
         $this->stdout("Remove WebApp $appName\n");
@@ -122,8 +174,6 @@ class AppController extends \yii\console\Controller
         }
 
         //unset evn config;
-
-
         $environmentsConfigFile = ROOT_DIR .'/environments/index.php';
         $environmentsConfig = require($environmentsConfigFile);
 
@@ -168,6 +218,10 @@ class AppController extends \yii\console\Controller
         $this->stdout("... ok\n");
     }
 
+    /**
+     * @param $appName
+     * @param null $enterName
+     */
     protected function generateConsoleAppEnvironments($appName, $enterName = null)
     {
         $this->stdout("Generate ConsoleApp $appName Environments\n");
@@ -195,11 +249,11 @@ class AppController extends \yii\console\Controller
         }
 
         foreach($envs as $env) {
-            $distPath = ROOT_DIR .'/environments/'. $env;
+            $distPath = ROOT_DIR .'/environments/'. $env ;
             $templatePath = APPS_DIR .'/console/templates/consoleenvironment/'. $env;
 
             $files = [
-                ['enter']
+                ['scripts/enter']
             ];
 
 
@@ -236,6 +290,9 @@ class AppController extends \yii\console\Controller
         $this->stdout("... ok\n");
     }
 
+    /**
+     * @param $appName
+     */
     protected function generateWebAppEnvironments($appName) {
         $this->stdout("Generate WebApp $appName Environments\n");
 
@@ -291,6 +348,9 @@ class AppController extends \yii\console\Controller
         $this->stdout("... ok\n");
     }
 
+    /**
+     * @param $appName
+     */
     protected function generateConsoleApp($appName)
     {
         $sourcePath = APPS_DIR .'/console/templates/consoleapp';
@@ -320,6 +380,9 @@ class AppController extends \yii\console\Controller
         $this->stdout("... ok\n");
     }
 
+    /**
+     * @param $appName
+     */
     protected function generateWebApp($appName)
     {
         $sourcePath = APPS_DIR .'/console/templates/webapp';
@@ -359,6 +422,9 @@ class AppController extends \yii\console\Controller
         $this->stdout("... ok\n");
     }
 
+    /**
+     * @param $appName
+     */
     public function addAppNameToCommon($appName)
     {
         //添加命名空间到common里
@@ -371,6 +437,9 @@ class AppController extends \yii\console\Controller
         }
     }
 
+    /**
+     * @param $appName
+     */
     protected function checkAppName($appName)
     {
         $appPath = APPS_DIR .'/' . $appName;
@@ -403,19 +472,28 @@ class AppController extends \yii\console\Controller
         }
     }
 
+    /**
+     * @param $source
+     * @param $dist
+     * @param null $appName
+     */
+    protected function copyFile($source, $dist, $appName = null)
+    {
+        @mkdir(dirname($dist), 0777, true);
+        if (is_file($source)) {
+            $content = file_get_contents($source);
+            if (!is_null($appName)) {
+                $content = str_replace('{appName}', $appName, $content);
+            }
+            file_put_contents($dist, $content);
+        }
+    }
 
- 	protected function copyFile($source, $dist, $appName = null)
- 	{
- 		@mkdir(dirname($dist), 0777, true);
- 		if (is_file($source)) {
-	 		$content = file_get_contents($source);
-	 		if (!is_null($appName)) {
-	 			$content = str_replace('{appName}', $appName, $content);
-	 		}
-	 		file_put_contents($dist, $content);
- 		}
- 	}
-
+    /**
+     * @param $dir
+     * @param bool $virtual
+     * @return bool
+     */
     protected function destroyDir($dir, $virtual = false)
     {
         $ds = DIRECTORY_SEPARATOR; 
