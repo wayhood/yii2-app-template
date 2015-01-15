@@ -15,6 +15,10 @@ apps
         controllers/     contains console controllers (commands)
         migrations/      contains database migrations
         models/          contains console-specific model classes
+scripts
+    init                 init project
+    yii                  yii command tool
+    requirements         php environment check.
 runtimes/                contains files generated during runtime by app name
 vendor/                  contains dependent 3rd-party packages
 environments/            contains environment-based overrides
@@ -36,8 +40,8 @@ After you install the application, you have to conduct the following steps to in
 the installed application. You only need to do these once for all.
 
 1. Run command `init` to initialize the application with a specific environment.
-2. Run command `./yii app/create-webapp "appname".
-3. Run command `./yii app/delete-webapp "appname" will remove app.
+2. Run command `./yii app/create-web-app "appname".
+3. Run command `./yii app/delete-web-app "appname" will remove app.
 4. Run command `./yii help app` show all.
 5. Create a new database and adjust the `components['db']` configuration in `common/config/main-local.php` accordingly.
 6. Apply migrations with console command `yii migrate`. This will create tables needed for the application to work.
