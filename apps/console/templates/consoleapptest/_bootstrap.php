@@ -12,6 +12,7 @@ defined('ROOT_DIR') or define('ROOT_DIR', YII_APP_BASE_PATH);
 require_once(VENDOR_DIR . '/autoload.php');
 require_once(VENDOR_DIR . '/yiisoft/yii2/Yii.php');
 require_once(APPS_DIR . '/common/config/bootstrap.php');
+require_once(APPS_DIR . '/{appName}/config/bootstrap.php');
 
 // set correct script paths
 $_SERVER['SERVER_NAME'] = 'localhost';

@@ -5,6 +5,8 @@
 
 namespace console\controllers;
 
+use Symfony\Component\Yaml\Yaml;
+
 /**
  * Create or Delete to web or console application
  *
@@ -27,6 +29,17 @@ namespace console\controllers;
 class AppController extends \yii\console\Controller
 {
 
+    public function actionTest()
+    {
+        $appName = 'backend';
+        $testYml = ROOT_DIR .'/tests/codeception.yml';
+
+        $array = Yaml::parse(file_get_contents($testYml));
+        $array['include'][] = 'codeception/'. $appName;
+        var_dump($array);exit;
+        print Yaml::dump($array);
+    }
+
     /**
      * Create a web application
      * @param $appName app's name
@@ -41,6 +54,8 @@ class AppController extends \yii\console\Controller
             $this->addAppNameToCommon($appName);
 
             $this->generateWebAppEnvironments($appName);
+
+            $this->generateWebAppTest($appName);
         }
     }
 
@@ -59,6 +74,7 @@ class AppController extends \yii\console\Controller
             $this->addAppNameToCommon($appName);
 
             $this->generateConsoleAppEnvironments($appName, $enterName);
+            $this->generateConsoleAppTest($appName, $enterName);
         }
     }
 
@@ -77,6 +93,7 @@ class AppController extends \yii\console\Controller
         if ($ret) {
             $this->deleteWebApp($appName);
             $this->deleteRuntime($appName);
+            $this->deleteAppTest($appName);
         }
     }
 
@@ -101,6 +118,7 @@ class AppController extends \yii\console\Controller
         if ($ret) {
             $this->deleteConsoleApp($appName, $enterName);
             $this->deleteRuntime($appName);
+            $this->deleteAppTest($appName);
         }
     }
 
@@ -112,6 +130,33 @@ class AppController extends \yii\console\Controller
     {
         $runtimePath = ROOT_DIR .'/runtimes/' . $appName;
         $this->destroyDir($runtimePath);
+    }
+
+    protected function deleteAppTest($appName)
+    {
+        $this->stdout("Remove App Test\n");
+        $path = ROOT_DIR .'/tests/codeception/'. $appName;
+        $this->destroyDir($path);
+
+        //update tests/codeception.yml
+
+        $testYml = ROOT_DIR .'/tests/codeception.yml';
+        $array = Yaml::parse(file_get_contents($testYml));
+
+        if (in_array('codeception/'. $appName, $array['include'])) {
+            $keys = array_keys($array['include'], 'codeception/'. $appName);
+
+            foreach($keys as $key) {
+                unset($array['include'][$key]);
+            }
+        }
+        file_put_contents($testYml, Yaml::dump($array));
+
+        //remove test config
+        $path = ROOT_DIR .'/tests/codeception/config/'. $appName ;
+        $this->destroyDir($path);
+        
+        $this->stdout("... ok\n");
     }
 
     /**
@@ -222,6 +267,118 @@ class AppController extends \yii\console\Controller
         }
 
         file_put_contents($environmentsConfigFile, "<?php\nreturn ". var_export($environmentsConfig, true).';');
+
+        $this->stdout("... ok\n");
+    }
+
+    protected function generateConsoleAppTest($appName, $enterName = null)
+    {
+        $this->stdout("Generate WebTest $appName Test\n");
+
+        $distPath = ROOT_DIR .'/tests/codeception/'. $appName;
+        $sourcePath = APPS_DIR .'/console/templates/consoleapptest';
+
+        $files = [
+            '_output/.gitignore',
+            'unit/fixtures/data/.gitkeep',
+            ['unit/_bootstrap.php'],
+            ['unit/DbTestCase.php'],
+            ['unit/TestCase'],
+            '.gitignore',
+            ['_bootstrap.php'],
+            ['codeception.yml'],
+            'unit.suite.yml'
+        ];
+
+        foreach($files as $file) {
+            $replace = null;
+            if (is_array($file)) {
+                $file = $file[0];
+                $replace = $appName;
+            }
+            $source = $sourcePath .'/'. $file;
+            $dist = $distPath .'/'. $file;
+            $this->copyFile($source, $dist, $replace);
+        }
+
+        //update tests/codeception.yml
+
+        $testYml = ROOT_DIR .'/tests/codeception.yml';
+        $array = Yaml::parse(file_get_contents($testYml));
+
+        if ( !in_array('codeception/'. $appName, $array['include'])) {
+            $array['include'][] = 'codeception/'. $appName;
+        }
+        file_put_contents($testYml, Yaml::dump($array));
+
+
+        //generate test config
+        $distPath = ROOT_DIR .'/tests/codeception/config/'. $appName ;
+        $sourcePath = APPS_DIR .'/console/templates/consoleapptestconfig';
+
+        $files = [
+            ['unit.php']
+        ];
+
+        foreach($files as $file) {
+            $replace = null;
+            if (is_array($file)) {
+                $file = $file[0];
+                $replace = $appName;
+            }
+            $source = $sourcePath .'/'. $file;
+            $dist = $distPath .'/'. $file;
+            $this->copyFile($source, $dist, $replace);
+        }
+
+        $this->stdout("... ok\n");
+    }
+
+    protected function generateWebAppTest($appName)
+    {
+        $this->stdout("Generate WebApp $appName Test\n");
+
+        $distPath = ROOT_DIR .'/tests/codeception/'. $appName;
+        $sourcePath = APPS_DIR .'/console/templates/webapptest';
+
+        $files = [
+            '_output/.gitignore',
+            ['acceptance/_bootstrap.php'],
+            ['acceptance/LoginCept.php'],
+            ['functional/_bootstrap.php'],
+            ['functional/LoginCept.php'],
+            'unit/fixtures/data/.gitkeep',
+            ['unit/_bootstrap.php'],
+            ['unit/DbTestCase.php'],
+            ['unit/TestCase'],
+            '.gitignore',
+            ['_bootstrap.php'],
+            'acceptance.suite.yml',
+            ['codeception.yml'],
+            ['functional.suite.yml'],
+            'unit.suite.yml'
+        ];
+
+        foreach($files as $file) {
+            $replace = null;
+            if (is_array($file)) {
+                $file = $file[0];
+                $replace = $appName;
+            }
+            $source = $sourcePath .'/'. $file;
+            $dist = $distPath .'/'. $file;
+            $this->copyFile($source, $dist, $replace);
+        }
+
+        //update tests/codeception.yml
+
+        $testYml = ROOT_DIR .'/tests/codeception.yml';
+        $array = Yaml::parse(file_get_contents($testYml));
+
+        if ( !in_array('codeception/'. $appName, $array['include'])) {
+            $array['include'][] = 'codeception/'. $appName;
+        }
+        file_put_contents($testYml, Yaml::dump($array));
 
         $this->stdout("... ok\n");
     }

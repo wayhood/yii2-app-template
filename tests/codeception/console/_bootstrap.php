@@ -4,10 +4,15 @@ defined('YII_ENV') or define('YII_ENV', 'test');
 
 defined('YII_APP_BASE_PATH') or define('YII_APP_BASE_PATH', dirname(dirname(dirname(__DIR__))));
 
-require_once(YII_APP_BASE_PATH . '/vendor/autoload.php');
-require_once(YII_APP_BASE_PATH . '/vendor/yiisoft/yii2/Yii.php');
-require_once(YII_APP_BASE_PATH . '/common/config/bootstrap.php');
-require_once(YII_APP_BASE_PATH . '/console/config/bootstrap.php');
+defined('VENDOR_DIR') or define('VENDOR_DIR', YII_APP_BASE_PATH .'/vendor');
+defined('TESTS_DIR') or define('TESTS_DIR', YII_APP_BASE_PATH .'/tests');
+defined('APPS_DIR') or define('APPS_DIR', YII_APP_BASE_PATH .'/apps');
+defined('ROOT_DIR') or define('ROOT_DIR', YII_APP_BASE_PATH);
+
+require_once(VENDOR_DIR . '/autoload.php');
+require_once(VENDOR_DIR . '/yiisoft/yii2/Yii.php');
+require_once(APPS_DIR . '/common/config/bootstrap.php');
+require_once(APPS_DIR . '/console/config/bootstrap.php');
 
 // set correct script paths
 $_SERVER['SERVER_NAME'] = 'localhost';
