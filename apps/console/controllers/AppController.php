@@ -380,6 +380,28 @@ class AppController extends \yii\console\Controller
         }
         file_put_contents($testYml, Yaml::dump($array));
 
+        //generate test config
+        $distPath = ROOT_DIR .'/tests/codeception/config/'. $appName ;
+        $sourcePath = APPS_DIR .'/console/templates/webapptestconfig';
+
+        $files = [
+            ['acceptance.php'],
+            'config.php',
+            ['functional.php'],
+            ['unit.php'],
+        ];
+
+        foreach($files as $file) {
+            $replace = null;
+            if (is_array($file)) {
+                $file = $file[0];
+                $replace = $appName;
+            }
+            $source = $sourcePath .'/'. $file;
+            $dist = $distPath .'/'. $file;
+            $this->copyFile($source, $dist, $replace);
+        }
+
         $this->stdout("... ok\n");
     }
 
@@ -649,6 +671,7 @@ class AppController extends \yii\console\Controller
             $content = file_get_contents($source);
             if (!is_null($appName)) {
                 $content = str_replace('{appName}', $appName, $content);
+                $content = str_replace('{APPNAME}', strtoupper($appName), $content);
             }
             file_put_contents($dist, $content);
         }

@@ -1,11 +1,7 @@
 include:
-  - codeception/common
-  - codeception/console
-  - codeception/backend
-  - codeception/frontend
-
+    - codeception/common
+    - codeception/console
 paths:
-  log: codeception/_output
-
+    log: codeception/_output
 settings:
-  colors: true
+    colors: true
