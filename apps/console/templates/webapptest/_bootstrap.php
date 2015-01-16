@@ -10,7 +10,7 @@ defined('APPS_DIR') or define('APPS_DIR', YII_APP_BASE_PATH .'/apps');
 defined('ROOT_DIR') or define('ROOT_DIR', YII_APP_BASE_PATH);
 
 defined('YII_{APPNAME}_TEST_ENTRY_URL') or define('YII_{APPNAME}_TEST_ENTRY_URL', parse_url(\Codeception\Configuration::config()['config']['test_entry_url'], PHP_URL_PATH));
-defined('YII_TEST_{APPNAME}_ENTRY_FILE') or define('YII_TEST_{APPNAME}_ENTRY_FILE', YII_APP_BASE_PATH . '/{appName}/web/index-test.php');
+defined('YII_TEST_{APPNAME}_ENTRY_FILE') or define('YII_TEST_{APPNAME}_ENTRY_FILE', APPS_DIR . '/{appName}/web/index-test.php');
 
 require_once(VENDOR_DIR . '/autoload.php');
 require_once(VENDOR_DIR . '/yiisoft/yii2/Yii.php');

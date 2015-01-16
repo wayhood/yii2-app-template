@@ -37,18 +37,18 @@ GETTING STARTED
 ---------------
 
 1. 运行 `scripts/init` 初始化项目 (生成对应环境的scripts/yii 命令
-2. 运行 `scripts/yii app/create-web-app "appname" 创建一个web app 到 apps/ 下
+2. 运行 `scripts/yii app/create-web-app "appname"` 创建一个web app 到 apps/ 下
 3. 运行 `scripts/init` 再次初始化项目
 
 更多app命令
 
-- 运行 `scripts/yii app/delete-web-app "appname" 删除一个web应用， 不可回复，请慎用。
-- 运行 `scripts/yii app/create-console-app "appname" "entryname"  创建一个控制台应用，entryname为入口文件名，不能是yii
-- 运行 `scripts/yii app/delete-console-app "appname" "entryname" 删除一个控制台应用，不可恢复，请慎用
+- 运行 `scripts/yii app/delete-web-app "appname"` 删除一个web应用， 不可回复，请慎用。
+- 运行 `scripts/yii app/create-console-app "appname" "entryname"`  创建一个控制台应用，entryname为入口文件名，不能是yii
+- 运行 `scripts/yii app/delete-console-app "appname" "entryname"` 删除一个控制台应用，不可恢复，请慎用
 
 Set document roots of your Web server:
 
-- for appname `/path/to/yii-application/apps/"appname"/web/` and using the URL `http://frontend/`
+- for appname `/path/to/yii-application/apps/"appname"/web/` and using the URL `http://webserver/pato/to/`
 
 Run a Console App:
 
