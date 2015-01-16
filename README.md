@@ -40,9 +40,9 @@ After you install the application, you have to conduct the following steps to in
 the installed application. You only need to do these once for all.
 
 1. Run command `init` to initialize the application with a specific environment.
-2. Run command `./yii app/create-web-app "appname".
-3. Run command `./yii app/delete-web-app "appname" will remove app.
-4. Run command `./yii help app` show all.
+2. Run command `scripts/yii app/create-web-app "appname".
+3. Run command `scripts/yii app/delete-web-app "appname" will remove app.
+4. Run command `scripts/yii help app` show all.
 5. Create a new database and adjust the `components['db']` configuration in `common/config/main-local.php` accordingly.
 6. Apply migrations with console command `yii migrate`. This will create tables needed for the application to work.
 7. Set document roots of your Web server:
