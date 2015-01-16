@@ -36,20 +36,20 @@ php composer.phar create-project --prefer-dist --stability=dev wayhood/yii2-app-
 GETTING STARTED
 ---------------
 
-After you install the application, you have to conduct the following steps to initialize
-the installed application. You only need to do these once for all.
+1. 运行 `scripts/init` 初始化项目 (生成对应环境的scripts/yii 命令
+2. 运行 `scripts/yii app/create-web-app "appname" 创建一个web app 到 apps/ 下
+3. 运行 `scripts/init` 再次初始化项目
 
-1. Run command `init` to initialize the application with a specific environment.
-2. Run command `scripts/yii app/create-web-app "appname".
-3. Run command `scripts/yii app/delete-web-app "appname" will remove app.
-4. Run command `scripts/yii help app` show all.
-5. Create a new database and adjust the `components['db']` configuration in `common/config/main-local.php` accordingly.
-6. Apply migrations with console command `yii migrate`. This will create tables needed for the application to work.
-7. Set document roots of your Web server:
+更多app命令
 
-- for frontend `/path/to/yii-application/apps/frontend/web/` and using the URL `http://frontend/`
-- for backend `/path/to/yii-application/apps/backend/web/` and using the URL `http://backend/`
+- 运行 `scripts/yii app/delete-web-app "appname" 删除一个web应用， 不可回复，请慎用。
+- 运行 `scripts/yii app/create-console-app "appname" "entryname"  创建一个控制台应用，entryname为入口文件名，不能是yii
+- 运行 `scripts/yii app/delete-console-app "appname" "entryname" 删除一个控制台应用，不可恢复，请慎用
 
+Set document roots of your Web server:
 
-To login into the application, you need to first sign up, with any of your email address, username and password.
-Then, you can login into the application with same email address and password at any time.
+- for appname `/path/to/yii-application/apps/"appname"/web/` and using the URL `http://frontend/`
+
+Run a Console App:
+
+- scripts/"entryname"
