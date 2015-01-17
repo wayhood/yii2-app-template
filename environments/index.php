@@ -8,7 +8,6 @@ return array (
     ),
     'setExecutable' => 
     array (
-      0 => 'scripts/yii',
     ),
     'setCookieValidationKey' => 
     array (
@@ -22,7 +21,6 @@ return array (
     ),
     'setExecutable' => 
     array (
-      0 => 'scripts/yii',
     ),
     'setCookieValidationKey' => 
     array (

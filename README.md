@@ -49,4 +49,4 @@ yii系统的命令，使用 `vendor/bin/yii`
 
 1. `scripts/app --act=Create --type=Web --name=backend`
 2. `scripts/app --act=Create --type=Web --name=frontend`
-3. `scirpts/app --act=Create --type=Console --name=console --enter=yii`
+3. `scripts/app --act=Create --type=Console --name=console --enter=yii`

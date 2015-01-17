@@ -1,6 +1,5 @@
 include:
     - codeception/common
-    - codeception/console
 paths:
     log: codeception/_output
 settings:
