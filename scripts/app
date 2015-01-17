@@ -152,28 +152,46 @@ if (empty($params['name'])) {
 
 $enterName = '';
 if ($typeName == 'Console') {
-	//check enterName
-	$times = 0;
-	$again = false;
-	while(true) {
-		if ($times > 2) {
-			echo "\n  Quit Creation/Deletion. Result errors times greater than 3.\n";
-			exit(-2);
-		}
-		if ($times > 0) {
-			$again = true;
-		}
-		$enterName = inputEnterName($again);
-		if (checkAppName($enterName, $appName, false)) {
-			break;
-		}
-		$times++;
-	}
+    if (empty($params['enter'])) {
+    	//check enterName
+    	$times = 0;
+    	$again = false;
+    	while(true) {
+    		if ($times > 2) {
+    			echo "\n  Quit Creation/Deletion. Result errors times greater than 3.\n";
+    			exit(-2);
+    		}
+    		if ($times > 0) {
+    			$again = true;
+    		}
+    		$enterName = inputEnterName($again);
+    		if (checkAppName($enterName, $appName, false)) {
+    			break;
+    		}
+    		$times++;
+    	}
+    } else {
+        $enterName = $params['enter'];
+        if (!checkAppName($enterName, $appName, false)) {
+            exit(-2);
+        }
+    }
 }
 
 if (trim($enterName) == '') {
 	$enterName = $appName;
 }
+
+if ($actionName == 'Delete') {
+    echo "\n  Delete '$appName'  the $typeName application? Are you sure?[yes|no] ";
+    $answer = trim(fgets(STDIN));
+    if (strncasecmp($answer, 'y', 1)) {
+        echo "\n  Quit Creation/Deletion.\n";
+        exit(0);
+    }
+}
+
+
 
 echo "\n  Start $actionName $typeName Application...\n\n";
 
@@ -190,6 +208,7 @@ if ($actionName == 'Create') {
     }
 } else { //Delete
     $path = "$root/apps/$appName";
+    echo "   Delete $path\n";
     destroyDir($path);
 }
 
@@ -198,6 +217,7 @@ echo "\n   $actionName environment...\n\n";
 $envConfigFile = "$root/environments/index.php";
 $envConfig = require($envConfigFile);
 $webAssetsPath = "apps/$appName/web/assets";
+$enterScriptFile = "scripts/$enterName";
 $validationKeyFile = "apps/$appName/config/main-local.php";
 $envs = ['Development', 'Production'];
 
@@ -207,6 +227,7 @@ if ($actionName == 'Create') {
     $all = false;
     foreach ($files as $file) {
         $newFile = str_replace("/app/", "/$appName/", $file);
+        $newFile = str_replace("/enter", "/$enterName", $newFile);
         if (!copyFile($root, "$envTemplatePath/$file", "environments/$newFile", $all, $params)) {
             break;
         }
@@ -214,37 +235,66 @@ if ($actionName == 'Create') {
 
     //change $root/environments/index.php
     foreach($envs as $env) {
-        if (!in_array($webAssetsPath, $envConfig[$env]['setWritable'])) {
-            $envConfig[$env]['setWritable'][] = $webAssetsPath;
-        }
+        if ($typeName == 'Console') {
+            if (!in_array($enterScriptFile, $envConfig[$env]['setExecutable'])) {
+                $envConfig[$env]['setExecutable'][] = $enterScriptFile;
+            }
+        } else {
+            if (!in_array($webAssetsPath, $envConfig[$env]['setWritable'])) {
+                $envConfig[$env]['setWritable'][] = $webAssetsPath;
+            }
 
-        if (!in_array($validationKeyFile, $envConfig[$env]['setCookieValidationKey'])) {
-            $envConfig[$env]['setCookieValidationKey'][] = $validationKeyFile;
+            if (!in_array($validationKeyFile, $envConfig[$env]['setCookieValidationKey'])) {
+                $envConfig[$env]['setCookieValidationKey'][] = $validationKeyFile;
+            }
         }
     }
     file_put_contents($envConfigFile, "<?php\nreturn ". var_export($envConfig, true).';');
 
 } else {
     $path = "$root/environments/dev/apps/$appName";
+    echo "   Delete $path\n";
     destroyDir($path);
     $path = "$root/environments/prod/apps/$appName";
+    echo "   Delete $path\n";
     destroyDir($path);
+
+    $enterFile = "$root/$enterScriptFile";
+    echo "   Delete $enterFile\n";
+    @unlink($enterFile);
+
+    $enterFile = "$root/environments/dev/$enterScriptFile";
+    echo "   Delete $enterFile\n";
+    @unlink($enterFile);
+    $enterFile = "$root/environments/prod/$enterScriptFile";
+    echo "   Delete $enterFile\n";
+    @unlink($enterFile);
 
     //change $root/environments/index.php
     foreach($envs as $env) {
-        if (in_array($webAssetsPath, $envConfig[$env]['setWritable'])) {
-            $keys = array_keys($envConfig[$env]['setWritable'], $webAssetsPath);
+        if ($typeName == 'Console') {
+            if (in_array($enterScriptFile, $envConfig[$env]['setExecutable'])) {
+                $keys = array_keys($envConfig[$env]['setExecutable'], $enterScriptFile);
 
-            foreach($keys as $key) {
-                unset($envConfig[$env]['setWritable'][$key]);
+                foreach($keys as $key) {
+                    unset($envConfig[$env]['setExecutable'][$key]);
+                }
             }
-        }
+        } else {
+            if (in_array($webAssetsPath, $envConfig[$env]['setWritable'])) {
+                $keys = array_keys($envConfig[$env]['setWritable'], $webAssetsPath);
 
-        if (in_array($validationKeyFile, $envConfig[$env]['setCookieValidationKey'])) {
-            $keys = array_keys($envConfig[$env]['setCookieValidationKey'], $validationKeyFile);
+                foreach($keys as $key) {
+                    unset($envConfig[$env]['setWritable'][$key]);
+                }
+            }
 
-            foreach($keys as $key) {
-                unset($envConfig[$env]['setCookieValidationKey'][$key]);
+            if (in_array($validationKeyFile, $envConfig[$env]['setCookieValidationKey'])) {
+                $keys = array_keys($envConfig[$env]['setCookieValidationKey'], $validationKeyFile);
+
+                foreach($keys as $key) {
+                    unset($envConfig[$env]['setCookieValidationKey'][$key]);
+                }
             }
         }
     }
@@ -280,11 +330,32 @@ if ($actionName == 'Create') {
     }
     file_put_contents($testYml, \Symfony\Component\Yaml\Yaml::dump($array));
 
+    //create test script
+    if ($typeName = 'Console') {
+        $testBinTemplatePath = $templatesDir.'/console/tests/bin';
+        $files = getFileList($testBinTemplatePath);
+        $all = false;
+        foreach ($files as $file) {
+            $newFile = str_replace('enter', "$enterName", $file);
+            if (!copyFile($root, "$testBinTemplatePath/$file", "tests/codeception/bin/$newFile", $all, $params)) {
+                break;
+            }
+            @chmod("$root/tests/codeception/bin/$newFile", 0755);
+        }
+    }
+    
+
 } else {
     $path = "$root/tests/codeception/$appName";
+    echo "   Delete $path\n";
     destroyDir($path);
     $path = "$root/tests/codeception/config/$appName";
+    echo "   Delete $path\n";
     destroyDir($path);
+
+    $enterFilePath = "$root/tests/codeception/bin/$enterName";
+    echo "   Delete $enterFilePath\n";
+    @unlink($enterFilePath);
 
     //change yml
     $array = \Symfony\Component\Yaml\Yaml::parse(file_get_contents($testYml));
@@ -299,11 +370,6 @@ if ($actionName == 'Create') {
 }
 
 echo "\n  ... $actionName completed.\n\n";
-
-echo "actionName   : $actionName \n";
-echo "typeName     : $typeName \n";
-echo "appName      : $appName \n";
-echo "enterName    : $enterName \n";
 
 function inputEnterName($again = false)
 {
