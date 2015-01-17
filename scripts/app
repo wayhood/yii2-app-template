@@ -1,0 +1,489 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Yii Application Creation/Deletion Tool
+ *
+ * In order to run in non-interactive mode:
+ *
+ * app --act=Create --type=Web --name=appName --enter=enterFileName --overwrite=n
+ *
+ * @author Song Yeung <netyum@163.com>
+ *
+ * @link http://www.wayhood.com/
+ * @copyright Copyright (c) 2014 Wayhood Technology LLC
+ */
+
+if (!extension_loaded('mcrypt')) {
+    die('The mcrypt PHP extension is required by Yii2.');
+}
+
+$params = getParams();
+$root = str_replace('\\', '/', __DIR__.'/..');
+$vendorDir = 'vendor';
+$appsDir = 'apps'; 
+
+$templatesDir = $vendorDir.'/wayhood/yii2-app-template-files';
+if (!is_dir($root.'/'.$templatesDir)) {
+	die('Please run command: php composer.phar require --prefer-dist wayhood/yii2-app-template-files "*" ');
+}
+
+require("$root/vendor/autoload.php");
+
+$reserved = ['common', 'config', 'yii', 'console', 'bin', 'requirements', 'app'];
+
+$actionNames = ['Create', 'Delete'];
+$actionName = null;
+
+echo "Yii Application Creation/Deletion Tool v1.0\n\n";
+
+//check act
+if (empty($params['act']) || $params['act'] === '1') {
+    echo "Which action do you want the application to be created/deleted in?\n\n";
+    foreach ($actionNames as $i => $name) {
+        echo "  [$i] $name application\n";
+    }
+    echo "\n  Your choice [0-" . (count($actionNames) - 1) . ', or "q" to quit] ';
+    $answer = trim(fgets(STDIN));
+
+    if (!ctype_digit($answer) || !in_array($answer, range(0, count($actionNames) - 1))) {
+        echo "\n  Quit Creation/Deletion.\n";
+        exit(0);
+    }
+
+    if (isset($actionNames[$answer])) {
+        $actionName = $actionNames[$answer];
+    }
+} else {
+    $actionName = $params['act'];
+}
+
+if (!in_array($actionName, $actionNames)) {
+    $actsList = implode(', ', $actionNames);
+    echo "\n  $actionName is not a valid action. Try one of the following: $actsList. \n";
+    exit(2);
+}
+
+if (empty($params['act'])) {
+    echo "\n  $actionName the application? [yes|no] ";
+    $answer = trim(fgets(STDIN));
+    if (strncasecmp($answer, 'y', 1)) {
+        echo "\n  Quit Creation/Deletion.\n";
+        exit(0);
+    }
+}
+
+$typeNames = ['Web', 'Console'];
+$typeName = null;
+//check type
+if (empty($params['type']) || $params['type'] === '1') {
+	$an = strtolower($actionName);
+    echo "\nWhich type do you want the application to be {$an}d web/console in?\n\n";
+    foreach ($typeNames as $i => $name) {
+        echo "  [$i] $actionName $name application\n";
+    }
+    echo "\n  Your choice [0-" . (count($typeNames) - 1) . ', or "q" to quit] ';
+    $answer = trim(fgets(STDIN));
+
+    if (!ctype_digit($answer) || !in_array($answer, range(0, count($typeNames) - 1))) {
+        echo "\n  Quit Creation/Deletion.\n";
+        exit(0);
+    }
+
+    if (isset($typeNames[$answer])) {
+        $typeName = $typeNames[$answer];
+    }
+} else {
+    $typeName = $params['type'];
+}
+
+if (!in_array($typeName, $typeNames)) {
+    $typesList = implode(', ', $typeNames);
+    echo "\n  $typeName is not a valid type. Try one of the following: $typesList. \n";
+    exit(2);
+}
+
+if (empty($params['type'])) {
+    echo "\n  $actionName $typeName the application? [yes|no] ";
+    $answer = trim(fgets(STDIN));
+    if (strncasecmp($answer, 'y', 1)) {
+        echo "\n  Quit Creation/Deletion.\n";
+        exit(0);
+    }
+}
+
+$appName = '';
+//check app name
+if (empty($params['name'])) {
+	$times = 0;
+	$again = false;
+	while(true) {
+		if ($times > 2) {
+			echo "\n  Quit Creation/Deletion. Result errors times greater than 3.\n";
+			exit(-2);
+		}
+		if ($times > 0) {
+			$again = true;
+		}
+		$appName = inputAppName($again);
+        if ($actionName == 'Create') {
+            if (checkAppName($appName)) {
+                break;
+            }
+        } else {
+    		if (checkAppName($appName, false, false)) {
+    			break;
+    		}
+        }
+		$times++;
+	}
+} else {
+	$appName = $params['name'];
+
+    if ($actionName == 'Create') {
+        if (!checkAppName($appName)) {
+            exit(-2);
+        }
+    } else {
+        if (!checkAppName($appName, false, false)) {
+            exit(-2);
+        }
+    }
+}
+
+$enterName = '';
+if ($typeName == 'Console') {
+	//check enterName
+	$times = 0;
+	$again = false;
+	while(true) {
+		if ($times > 2) {
+			echo "\n  Quit Creation/Deletion. Result errors times greater than 3.\n";
+			exit(-2);
+		}
+		if ($times > 0) {
+			$again = true;
+		}
+		$enterName = inputEnterName($again);
+		if (checkAppName($enterName, $appName, false)) {
+			break;
+		}
+		$times++;
+	}
+}
+
+if (trim($enterName) == '') {
+	$enterName = $appName;
+}
+
+echo "\n  Start $actionName $typeName Application...\n\n";
+
+echo "\n   $actionName application...\n\n";
+
+if ($actionName == 'Create') {
+    $appTemplatePath = $templatesDir.'/'.strtolower($typeName).'/apps/app';
+    $files = getFileList($appTemplatePath);
+    $all = false;
+    foreach ($files as $file) {
+        if (!copyFile($root, "$appTemplatePath/$file", "apps/$appName/$file", $all, $params)) {
+            break;
+        }
+    }
+} else { //Delete
+    $path = "$root/apps/$appName";
+    destroyDir($path);
+}
+
+echo "\n   $actionName environment...\n\n";
+
+$envConfigFile = "$root/environments/index.php";
+$envConfig = require($envConfigFile);
+$webAssetsPath = "apps/$appName/web/assets";
+$validationKeyFile = "apps/$appName/config/main-local.php";
+$envs = ['Development', 'Production'];
+
+if ($actionName == 'Create') {
+    $envTemplatePath = $templatesDir.'/'.strtolower($typeName).'/environments';
+    $files = getFileList($envTemplatePath);
+    $all = false;
+    foreach ($files as $file) {
+        $newFile = str_replace("/app/", "/$appName/", $file);
+        if (!copyFile($root, "$envTemplatePath/$file", "environments/$newFile", $all, $params)) {
+            break;
+        }
+    }
+
+    //change $root/environments/index.php
+    foreach($envs as $env) {
+        if (!in_array($webAssetsPath, $envConfig[$env]['setWritable'])) {
+            $envConfig[$env]['setWritable'][] = $webAssetsPath;
+        }
+
+        if (!in_array($validationKeyFile, $envConfig[$env]['setCookieValidationKey'])) {
+            $envConfig[$env]['setCookieValidationKey'][] = $validationKeyFile;
+        }
+    }
+    file_put_contents($envConfigFile, "<?php\nreturn ". var_export($envConfig, true).';');
+
+} else {
+    $path = "$root/environments/dev/apps/$appName";
+    destroyDir($path);
+    $path = "$root/environments/prod/apps/$appName";
+    destroyDir($path);
+
+    //change $root/environments/index.php
+    foreach($envs as $env) {
+        if (in_array($webAssetsPath, $envConfig[$env]['setWritable'])) {
+            $keys = array_keys($envConfig[$env]['setWritable'], $webAssetsPath);
+
+            foreach($keys as $key) {
+                unset($envConfig[$env]['setWritable'][$key]);
+            }
+        }
+
+        if (in_array($validationKeyFile, $envConfig[$env]['setCookieValidationKey'])) {
+            $keys = array_keys($envConfig[$env]['setCookieValidationKey'], $validationKeyFile);
+
+            foreach($keys as $key) {
+                unset($envConfig[$env]['setCookieValidationKey'][$key]);
+            }
+        }
+    }
+    file_put_contents($envConfigFile, "<?php\nreturn ". var_export($envConfig, true).';');
+}
+
+echo "\n   $actionName test...\n\n";
+
+$testYml = "$root/tests/codeception.yml";
+if ($actionName == 'Create') {
+    $testTemplatePath = $templatesDir.'/'.strtolower($typeName).'/tests/test';
+    $files = getFileList($testTemplatePath);
+    $all = false;
+    foreach ($files as $file) {
+        if (!copyFile($root, "$testTemplatePath/$file", "tests/codeception/$appName/$file", $all, $params)) {
+            break;
+        }
+    }
+
+    $testConfigTemplatePath = $templatesDir.'/'.strtolower($typeName).'/tests/config';
+    $files = getFileList($testConfigTemplatePath);
+    $all = false;
+    foreach ($files as $file) {
+        if (!copyFile($root, "$testConfigTemplatePath/$file", "tests/codeception/config/$appName/$file", $all, $params)) {
+            break;
+        }
+    }
+
+    //change yml
+    $array = \Symfony\Component\Yaml\Yaml::parse(file_get_contents($testYml));
+    if ( !in_array("codeception/$appName", $array['include'])) {
+        $array['include'][] = "codeception/$appName";
+    }
+    file_put_contents($testYml, \Symfony\Component\Yaml\Yaml::dump($array));
+
+} else {
+    $path = "$root/tests/codeception/$appName";
+    destroyDir($path);
+    $path = "$root/tests/codeception/config/$appName";
+    destroyDir($path);
+
+    //change yml
+    $array = \Symfony\Component\Yaml\Yaml::parse(file_get_contents($testYml));
+    if (in_array("codeception/$appName", $array['include'])) {
+        $keys = array_keys($array['include'], "codeception/$appName");
+
+        foreach($keys as $key) {
+            unset($array['include'][$key]);
+        }
+    }
+    file_put_contents($testYml, \Symfony\Component\Yaml\Yaml::dump($array));
+}
+
+echo "\n  ... $actionName completed.\n\n";
+
+echo "actionName   : $actionName \n";
+echo "typeName     : $typeName \n";
+echo "appName      : $appName \n";
+echo "enterName    : $enterName \n";
+
+function inputEnterName($again = false)
+{
+	global $params;
+	if (!$again) {
+    	echo "\n Please input a enter filename [Default some to application name]: ";
+    } else {
+    	echo "\n Please input a enter filename again [Default some to application name]: ";
+    }
+    $answer = trim(fgets(STDIN));
+    return $answer;
+}
+
+function inputAppName($again = false)
+{
+	global $params;
+	if (!$again) {
+    	echo "\n Please input the application name: ";
+    } else {
+    	echo "\n Please input the application name again: ";
+    }
+	$answer = trim(fgets(STDIN));
+	return $answer;
+}
+
+function checkAppName($appName, $defaultName = false, $exists = true) {
+	global $root, $appsDir, $reserved;
+
+	if ($defaultName == false) {
+		if (trim($appName) == "") {
+			echo "\n Error: name can't was empty.\n";
+			return false;
+		}
+	} else {
+		if (trim($appName) == "") {
+			$appName = $defaultName;
+		}
+	}
+	if (strpos($appName , " ") !== false) {
+		echo "\n Error: name can't contain spaces.\n";
+		return false;
+	}
+
+	if (strpos($appName, '/') !== false || strpos($appName, '\\') !== false ) {
+		echo "\n Error: name can't contain \\ or / characters". "\n";
+        return false;
+    }
+
+    $pattern = '#^[a-z]+$#';
+    if (!preg_match($pattern, $appName)) {
+        echo "\n Error: name only allowed to contain a-z characters\n";
+		return false;
+    }
+
+    if (in_array($appName, $reserved)) {
+    	echo "\n Error: $appName word was reserved word.\n";
+    	return false;
+    }
+
+    if ($exists) {
+        $dir = "$root/$appsDir/$appName";
+	    if (is_dir("$root/$appsDir/$appName")) {
+	        echo "\n Error: name '{$appName}' already exists at ". realpath($dir) ."\n";
+	        return false;
+	    }
+	}
+    return true;
+}
+
+
+function getParams()
+{
+    $rawParams = [];
+    if (isset($_SERVER['argv'])) {
+        $rawParams = $_SERVER['argv'];
+        array_shift($rawParams);
+    }
+
+    $params = [];
+    foreach ($rawParams as $param) {
+        if (preg_match('/^--(\w+)(=(.*))?$/', $param, $matches)) {
+            $name = $matches[1];
+            $params[$name] = isset($matches[3]) ? $matches[3] : true;
+        } else {
+            $params[] = $param;
+        }
+    }
+    return $params;
+}
+
+function getFileList($root, $basePath = '')
+{
+    $files = [];
+    $handle = opendir($root);
+    while (($path = readdir($handle)) !== false) {
+        if ($path === '.svn' || $path === '.' || $path === '..') {
+            continue;
+        }
+        $fullPath = "$root/$path";
+        $relativePath = $basePath === '' ? $path : "$basePath/$path";
+        if (is_dir($fullPath)) {
+            $files = array_merge($files, getFileList($fullPath, $relativePath));
+        } else {
+            $files[] = $relativePath;
+        }
+    }
+    closedir($handle);
+    return $files;
+}
+
+function copyFile($root, $source, $target, &$all, $params)
+{
+	global $appName;
+    if (!is_file($root . '/' . $source)) {
+        echo "       skip $target ($source not exist)\n";
+        return true;
+    }
+    if (is_file($root . '/' . $target)) {
+        if (file_get_contents($root . '/' . $source) === file_get_contents($root . '/' . $target)) {
+            echo "  unchanged $target\n";
+            return true;
+        }
+        if ($all) {
+            echo "  overwrite $target\n";
+        } else {
+            echo "      exist $target\n";
+            echo "            ...overwrite? [Yes|No|All|Quit] ";
+
+
+            $answer = !empty($params['overwrite']) ? $params['overwrite'] : trim(fgets(STDIN));
+            if (!strncasecmp($answer, 'q', 1)) {
+                return false;
+            } else {
+                if (!strncasecmp($answer, 'y', 1)) {
+                    echo "  overwrite $target\n";
+                } else {
+                    if (!strncasecmp($answer, 'a', 1)) {
+                        echo "  overwrite $target\n";
+                        $all = true;
+                    } else {
+                        echo "       skip $target\n";
+                        return true;
+                    }
+                }
+            }
+        }
+        $content = file_get_contents($root . '/' . $source);
+        //replace
+        $content = str_replace('{appName}', $appName, $content);
+        $content = str_replace('{APPNAME}', strtoupper($appName), $content);
+        file_put_contents($root . '/' . $target, $content);
+        return true;
+    }
+    echo "   generate $target\n";
+    @mkdir(dirname($root . '/' . $target), 0777, true);
+    $content = file_get_contents($root . '/' . $source);
+    //replace
+    $content = str_replace('{appName}', $appName, $content);
+    $content = str_replace('{APPNAME}', strtoupper($appName), $content);
+    file_put_contents($root . '/' . $target, $content);
+    return true;
+}
+
+function destroyDir($dir, $virtual = false)
+{
+    $ds = DIRECTORY_SEPARATOR; 
+    if (is_dir($dir) && $handle = opendir($dir)) {
+        while ($file = readdir($handle)) {
+            if ($file == '.' || $file == '..') {
+                continue;
+            } elseif (is_dir($dir.$ds.$file)) {
+                destroyDir($dir.$ds.$file);
+            } else {
+                @unlink($dir.$ds.$file);
+            }
+        }
+        closedir($handle);
+        @rmdir($dir);
+        return true;
+    } else {
+        return false;
+    }
+} 
