@@ -29,7 +29,7 @@ if (!is_dir($root.'/'.$templatesDir)) {
 
 require("$root/vendor/autoload.php");
 
-$reserved = ['common', 'config', 'yii', 'console', 'bin', 'requirements', 'app'];
+$reserved = ['common', 'config', 'init', 'console', 'bin', 'requirements', 'app'];
 
 $actionNames = ['Create', 'Delete'];
 $actionName = null;

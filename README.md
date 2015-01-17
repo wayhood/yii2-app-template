@@ -43,3 +43,10 @@ Run a Console App:
 - scripts/"entryname"
 
 yii系统的命令，使用 `vendor/bin/yii`
+
+
+快速还原官方的 yii2-app-advanced
+
+1.`scripts/app --act=Create --type=Web --name=backend`
+2.`scripts/app --act=Create --type=Web --name=frontend`
+3.`scirpts/app --act=Create --type=Console --name=console --enter=yii`
