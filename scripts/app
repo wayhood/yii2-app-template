@@ -369,6 +369,21 @@ if ($actionName == 'Create') {
     file_put_contents($testYml, \Symfony\Component\Yaml\Yaml::dump($array));
 }
 
+echo "\n   Add app namespace in  common\\config\bootstrap.php...\n\n";
+
+$commonBootstrapFile = "$root/apps/common/config/bootstrap.php";
+$content = file_get_contents($commonBootstrapFile);
+$pattern = "#Yii::setAlias\('". $appName ."'#";
+if ($actionName == "Create") {
+    if (!preg_match($pattern, $content)) {
+        $content .= "Yii::setAlias('". $appName ."', dirname(dirname(__DIR__)) . '/". $appName ."');\n";
+    }
+} else {
+    $pattern = "#Yii::setAlias\('". $appName ."', dirname\(dirname\(__DIR__\)\) . '/". $appName ."'\);\n#is";
+    $content = preg_replace($pattern, "", $content);
+}
+file_put_contents($commonBootstrapFile, $content);
+
 echo "\n  ... $actionName completed.\n\n";
 
 function inputEnterName($again = false)
