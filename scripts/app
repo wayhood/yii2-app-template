@@ -331,7 +331,7 @@ if ($actionName == 'Create') {
     file_put_contents($testYml, \Symfony\Component\Yaml\Yaml::dump($array));
 
     //create test script
-    if ($typeName = 'Console') {
+    if ($typeName == 'Console') {
         $testBinTemplatePath = $templatesDir.'/console/tests/bin';
         $files = getFileList($testBinTemplatePath);
         $all = false;
